@@ -20,28 +20,50 @@
         constructor(props){
           super(props)
           this.state = {
-            displayValue: '0'
+            value: null,
+            displayValue: '0',
+            waitingForOperand: false,
+            operator: null,
+            evaluated: false
           }
         }
         appendNumber(digit){
           const displayValue = this.state.displayValue;
-          this.setState({
-            displayValue: displayValue === '0' ? digit : displayValue + digit
-          })
+          const waitingForOperand = this.state.waitingForOperand;
+            if(waitingForOperand){
+              this.setState({
+                displayValue: digit,
+                waitingForOperand: false
+              })
+            }else{
+              this.setState({
+                displayValue: displayValue === '0' || displayValue === '-0' ? digit : displayValue + digit
+              })
+              }
         }
 
         clearDisplay(){
-          const displayValue = this.state
           this.setState({
-            displayValue: '0'
+            value: null,
+            displayValue: '0',
+            operator: null,
+            waitingForOperand: false,
+            evaluated: false
           })
         }
 
         inputDecimal(){
-          const displayValue = this.state.displayValue
-          if(displayValue.indexOf('.') === -1){
+          const displayValue = this.state.displayValue;
+          const waitingForOperand = this.state.waitingForOperand;
+          if(waitingForOperand){
             this.setState({
-              displayValue: displayValue + '.'
+              displayValue: '.',
+              waitingForOperand: false
+            })
+          }else if(displayValue.indexOf('.') === -1){
+            this.setState({
+              displayValue: displayValue + '.',
+              waitingForOperand: false
             })
           }
         }
@@ -49,36 +71,77 @@
         toggleSign(){
           const displayValue = this.state.displayValue
           this.setState({
-            displayValue: displayValue.charAt(0) === '-' ? displayValue.subtr(1) : '-' + displayValue
+            displayValue: (displayValue.charAt(0) === '-') ? displayValue.substr(1) : '-' + displayValue
+          })
+        }
+
+
+        performOperation(nextOperator) {
+          const value = this.state.value;
+          const displayValue = this.state.displayValue;
+          const operator = this.state.operator;
+          const inputValue = parseFloat(displayValue);
+
+          const operations = {
+            '/' : (prevValue, nextValue) => prevValue / nextValue,
+            '*' : (prevValue, nextValue) => prevValue * nextValue,
+            '-' : (prevValue, nextValue) => prevValue - nextValue,
+            '+' : (prevValue, nextValue) => prevValue + nextValue,
+            '=' : (prevValue, nextValue) => nextValue
+          }
+
+          if (value == null) {
+            this.setState({
+              value: inputValue
+            })
+          } else if (operator) {
+            const currentValue = value || 0
+            const newValue = operations[operator](currentValue, inputValue)
+
+            this.setState({
+              value: newValue,
+              displayValue: String(newValue).slice(0, 15)
+            })
+          }
+
+          this.setState({
+            waitingForOperand: true,
+            operator: nextOperator
           })
         }
 
         render(){
           return (
-            e(Calculator, null,
-              e(Display, null, this.state.displayValue),
-              e(Keyboard, null,
-                e(CalcButton, {id:'clear', onClick: () => this.clearDisplay()}, 'AC'),
-                e(CalcButton, {id:'sign', onClick: () => this.toggleSign()}, '±'),
-                e(CalcButton, {id:'divide', onClick: () => this.appendNumber('/')}, '/'),
-                e(CalcButton, {id:'multiply', onClick: () => this.appendNumber('*')}, 'x'),
-                e(CalcButton, {id:'seven', onClick: () => this.appendNumber('7')}, '7'),
-                e(CalcButton, {id:'eight', onClick: () => this.appendNumber('8')}, '8'),
-                e(CalcButton, {id:'nine', onClick: () => this.appendNumber('9')}, '9'),
-                e(CalcButton, {id:'subtract', onClick: () => this.appendNumber('-')}, '-'),
-                e(CalcButton, {id:'four', onClick: () => this.appendNumber('4')}, '4'),
-                e(CalcButton, {id:'five', onClick: () => this.appendNumber('5')}, '5'),
-                e(CalcButton, {id:'six', onClick: () => this.appendNumber('6')}, '6'),
-                e(CalcButton, {id:'add', onClick: () => this.appendNumber('+')}, '+'),
-                e(CalcButton, {id:'one', onClick: () => this.appendNumber('1')}, '1'),
-                e(CalcButton, {id:'two', onClick: () => this.appendNumber('2')}, '2'),
-                e(CalcButton, {id:'three', onClick: () => this.appendNumber('3')}, '3'),
-                e(CalcButton, {id:'zero', onClick: () => this.appendNumber('0')}, '0'),
-                e(CalcButton, {id:'decimal', onClick: () => this.inputDecimal()}, '.'),
-                e(CalcButton, {id:'equals', onClick: () => this.appendNumber('')}, '='),
-
-              )
+            e('div', {id:'wrapper'},
+              e('pre', null, JSON.stringify(this.state,null,2)),
+              e(Calculator, null,
+                e(Display, null, this.state.displayValue),
+                e(Keyboard, null,
+                  e(CalcButton, {id:'clear', onClick: () => this.clearDisplay()}, 'AC'),
+                  e(CalcButton, {id:'sign', onClick: () => this.toggleSign()}, '±'),
+                  e(CalcButton, {id:'divide', onClick: () => this.performOperation('/')}, '÷'),
+                  e(CalcButton, {id:'seven', onClick: () => this.appendNumber('7')}, '7'),
+                  e(CalcButton, {id:'eight', onClick: () => this.appendNumber('8')}, '8'),
+                  e(CalcButton, {id:'nine', onClick: () => this.appendNumber('9')}, '9'),
+                  e(CalcButton, {id:'multiply', onClick: () => this.performOperation('*')}, 'x'),
+                  e(CalcButton, {id:'four', onClick: () => this.appendNumber('4')}, '4'),
+                  e(CalcButton, {id:'five', onClick: () => this.appendNumber('5')}, '5'),
+                  e(CalcButton, {id:'six', onClick: () => this.appendNumber('6')}, '6'),
+                  e(CalcButton, {id:'subtract', onClick: () => this.performOperation('-')}, '-'),
+                  e(CalcButton, {id:'one', onClick: () => this.appendNumber('1')}, '1'),
+                  e(CalcButton, {id:'two', onClick: () => this.appendNumber('2')}, '2'),
+                  e(CalcButton, {id:'three', onClick: () => this.appendNumber('3')}, '3'),
+                  e(CalcButton, {id:'add', onClick: () => this.performOperation('+')}, '+'),
+                  e(CalcButton, {id:'zero', onClick: () => this.appendNumber('0')}, '0'),
+                  e(CalcButton, {id:'decimal', onClick: () => this.inputDecimal()}, '.'),
+                  e(CalcButton, {id:'equals', onClick: () => this.performOperation('=')}, '=')
+                )
+              ),
+              e('div', {id:'footer'}, 'Coded and designed by ',
+              e('br',null),
+              e('a', {id:'contact-link', target: '_blank', href: 'https://github.com/Rofrtd'}, 'Romy Furtado'))
             )
+
           )
         }
       }
@@ -106,8 +169,6 @@
           return e('button', {className:'calc-button', id: this.props.id, onClick: this.props.onClick}, this.props.children)
         }
       }
-
-
 
     ReactDOM.render(e(App), document.getElementById('app'));
     </script>
