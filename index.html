@@ -13,25 +13,38 @@
     <script src="https://cdn.freecodecamp.org/testable-projects-fcc/v1/bundle.js"></script>
 
     <script type="text/javascript">
-
       const e = React.createElement;
-
       class App extends React.Component{
         constructor(props){
           super(props)
           this.state = {
-            value: null,
             displayValue: '0',
             waitingForOperand: false,
             operator: null,
-            evaluated: false
+            expression: null,
           }
         }
         appendNumber(digit){
           const displayValue = this.state.displayValue;
           const waitingForOperand = this.state.waitingForOperand;
-            if(waitingForOperand){
+          const operator = this.state.operator;
+          const expression = this.state.expression;
+
+          if(expression == null){
+            this.setState({
+              expression: digit
+            })
+          }else {
+            this.setState({
+              expression: expression + digit
+            })
+          }if(waitingForOperand){
+            if(displayValue == '0.'){
               this.setState({
+                displayValue: displayValue + digit,
+                waitingForOperand: false
+              })
+            }else this.setState({
                 displayValue: digit,
                 waitingForOperand: false
               })
@@ -39,137 +52,138 @@
               this.setState({
                 displayValue: displayValue === '0' || displayValue === '-0' ? digit : displayValue + digit
               })
-              }
+            }
         }
 
         clearDisplay(){
           this.setState({
-            value: null,
             displayValue: '0',
             operator: null,
             waitingForOperand: false,
-            evaluated: false
+            expression: null
           })
         }
-
         inputDecimal(){
           const displayValue = this.state.displayValue;
           const waitingForOperand = this.state.waitingForOperand;
+          const expression = this.state.expression;
+
+          if(expression == null){
+            this.setState({
+              expression: '0.'
+            })
+          }else this.setState({expression: expression + '.'})
           if(waitingForOperand){
             this.setState({
-              displayValue: '.',
-              waitingForOperand: false
+              displayValue: '0.',
+              expression: expression + '0.'
             })
           }else if(displayValue.indexOf('.') === -1){
             this.setState({
               displayValue: displayValue + '.',
-              waitingForOperand: false
+              waitingForOperand: false,
             })
           }
         }
-
         toggleSign(){
           const displayValue = this.state.displayValue
           this.setState({
             displayValue: (displayValue.charAt(0) === '-') ? displayValue.substr(1) : '-' + displayValue
           })
         }
-
-
-        performOperation(nextOperator) {
-          const value = this.state.value;
+        appendOperator(nextOperator) {
           const displayValue = this.state.displayValue;
           const operator = this.state.operator;
-          const inputValue = parseFloat(displayValue);
+          const expression = this.state.expression;
+          const waitingForOperand = this.state.waitingForOperand;
 
-          const operations = {
-            '/' : (prevValue, nextValue) => prevValue / nextValue,
-            '*' : (prevValue, nextValue) => prevValue * nextValue,
-            '-' : (prevValue, nextValue) => prevValue - nextValue,
-            '+' : (prevValue, nextValue) => prevValue + nextValue,
-            '=' : (prevValue, nextValue) => nextValue
-          }
-
-          if (value == null) {
-            this.setState({
-              value: inputValue
-            })
-          } else if (operator) {
-            const currentValue = value || 0
-            const newValue = operations[operator](currentValue, inputValue)
-
-            this.setState({
-              value: newValue,
-              displayValue: String(newValue).slice(0, 15)
-            })
-          }
 
           this.setState({
             waitingForOperand: true,
-            operator: nextOperator
+            operator: nextOperator,
+          })
+          if (waitingForOperand) {
+            this.setState({
+              expression: expression.replace(/.$/, nextOperator)
+            })
+          }else {
+            if(expression === null){
+              this.setState({
+                expression: '0' + nextOperator
+              })
+            }else this.setState({
+            expression: expression + nextOperator
+            })
+          }
+        }
+
+        validator(){
+          const displayValue = this.state.displayValue;
+          const operator = this.state.operator;
+          const expression = this.state.expression;
+          const waitingForOperand = this.state.waitingForOperand;
+
+          this.setState({
+            displayValue: eval(eval(expression).toFixed(4)),
+            expression: eval(expression),
           })
         }
+
 
         render(){
           return (
             e('div', {id:'wrapper'},
-              e('pre', null, JSON.stringify(this.state,null,2)),
+              // e('pre', null, JSON.stringify(this.state,null,2)),
               e(Calculator, null,
                 e(Display, null, this.state.displayValue),
                 e(Keyboard, null,
                   e(CalcButton, {id:'clear', onClick: () => this.clearDisplay()}, 'AC'),
                   e(CalcButton, {id:'sign', onClick: () => this.toggleSign()}, '±'),
-                  e(CalcButton, {id:'divide', onClick: () => this.performOperation('/')}, '÷'),
+                  e(CalcButton, {id:'divide', onClick: () => this.appendOperator('/')}, '÷'),
                   e(CalcButton, {id:'seven', onClick: () => this.appendNumber('7')}, '7'),
                   e(CalcButton, {id:'eight', onClick: () => this.appendNumber('8')}, '8'),
                   e(CalcButton, {id:'nine', onClick: () => this.appendNumber('9')}, '9'),
-                  e(CalcButton, {id:'multiply', onClick: () => this.performOperation('*')}, 'x'),
+                  e(CalcButton, {id:'multiply', onClick: () => this.appendOperator('*')}, 'x'),
                   e(CalcButton, {id:'four', onClick: () => this.appendNumber('4')}, '4'),
                   e(CalcButton, {id:'five', onClick: () => this.appendNumber('5')}, '5'),
                   e(CalcButton, {id:'six', onClick: () => this.appendNumber('6')}, '6'),
-                  e(CalcButton, {id:'subtract', onClick: () => this.performOperation('-')}, '-'),
+                  e(CalcButton, {id:'subtract', onClick: () => this.appendOperator('-')}, '-'),
                   e(CalcButton, {id:'one', onClick: () => this.appendNumber('1')}, '1'),
                   e(CalcButton, {id:'two', onClick: () => this.appendNumber('2')}, '2'),
                   e(CalcButton, {id:'three', onClick: () => this.appendNumber('3')}, '3'),
-                  e(CalcButton, {id:'add', onClick: () => this.performOperation('+')}, '+'),
+                  e(CalcButton, {id:'add', onClick: () => this.appendOperator('+')}, '+'),
                   e(CalcButton, {id:'zero', onClick: () => this.appendNumber('0')}, '0'),
                   e(CalcButton, {id:'decimal', onClick: () => this.inputDecimal()}, '.'),
-                  e(CalcButton, {id:'equals', onClick: () => this.performOperation('=')}, '=')
+                  e(CalcButton, {id:'equals', onClick: () => this.validator()}, '=')
                 )
               ),
               e('div', {id:'footer'}, 'Coded and designed by ',
               e('br',null),
               e('a', {id:'contact-link', target: '_blank', href: 'https://github.com/Rofrtd'}, 'Romy Furtado'))
             )
-
           )
         }
       }
-
       class Calculator extends React.Component{
         render(){
           return e('div', {id:'calculator'}, this.props.children)
         }
       }
-
       class Display extends React.Component{
         render(){
           return e('div', {id: 'display'}, this.props.children)
         }
       }
-
       class Keyboard extends React.Component {
         render(){
           return e('div', {id:'keyboard'}, this.props.children)
         }
       }
-
       class CalcButton extends React.Component{
         render(){
           return e('button', {className:'calc-button', id: this.props.id, onClick: this.props.onClick}, this.props.children)
         }
       }
-
     ReactDOM.render(e(App), document.getElementById('app'));
     </script>
   </body>
