@@ -7,7 +7,7 @@ It was built using [React](https://facebook.github.io/react/).
 
 - I can add, subtract, multiply and divide two numbers.
 - I can clear the input field with a clear button.
-- In any order, I should be able to add, subtract, multiply and divide a chain of numbers of any length, and when I hit =, the correct result should be shown. ** EXAMPLE: 3 + 5 x 6 - 2 / 4 = **
+- In any order, I should be able to add, subtract, multiply and divide a chain of numbers of any length, and when I hit =, the correct result should be shown. **EXAMPLE: 3 + 5 x 6 - 2 / 4 =**
 - When inputting numbers, my calculator should not allow a number to begin with multiple zeros.
 - I should be able to perform any operation (+, -, *, /) on numbers containing decimal points.
 - If 2 or more operators are entered consecutively, the operation performed should be the last operator entered.
